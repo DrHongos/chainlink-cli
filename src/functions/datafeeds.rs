@@ -5,7 +5,7 @@ use alloy_rpc_types::{CallRequest, CallInput};
 use alloy_chains::Chain;
 use alloy_transport_http::Http;
 use reqwest::Client;
-use datafeeds::{DataFeeds, Oracle};
+use datafeeds::{DataFeeds, DataFeedIndexPrices};
 use crate::constants;
 use crate::functions::multicall3;
 use crate::functions::multicall3::Call3;
@@ -28,11 +28,11 @@ pub async fn get_latest_answer(
     token: String,
     base: String
 ) {
-    let price_feeds = DataFeeds::with_initial_values();
-    let oracle = price_feeds.get_oracle(chain, &token, &base).unwrap();
+    let price_feeds = DataFeeds::load_chain_feeds_prices(chain).await;
+    let oracle = price_feeds.get_data_feed_prices(&token, &base).unwrap();
     let tx = CallRequest {
-        to: Some(oracle.address),
-        input: oracle.latest_answer_call(),
+        to: Some(oracle.contract_address.unwrap()),
+        input: datafeeds::latest_answer_call(),
         ..Default::default()
     };
     match provider.call(tx, None).await {
@@ -42,7 +42,7 @@ pub async fn get_latest_answer(
             chain, 
             token, 
             base, 
-            format_units(b, oracle.decimals).unwrap()
+            format_units(b, oracle.decimals.unwrap()).unwrap()
         )
         },
         Err(e) => println!("Error: {:#?}", e)
@@ -56,11 +56,11 @@ pub async fn get_round_data(
     token: String, 
     base: String
 ) {
-    let price_feeds = DataFeeds::with_initial_values();
-    let oracle = price_feeds.get_oracle(chain, &token, &base).unwrap();
+    let price_feeds = DataFeeds::load_chain_feeds_prices(chain).await;
+    let oracle = price_feeds.get_data_feed_prices(&token, &base).unwrap();
     let tx = CallRequest {
-        to: Some(oracle.address),
-        input: oracle.get_round_data_call(round_id.to_owned()),
+        to: Some(oracle.contract_address.unwrap()),
+        input: datafeeds::get_round_data_call(round_id.to_owned()),
         ..Default::default()
     };
     match provider.call(tx, None).await {
@@ -74,7 +74,7 @@ pub async fn get_round_data(
             base,
             response.roundId, 
             response.answer, 
-            format_units(response.answer, oracle.decimals).unwrap(),
+            format_units(response.answer, oracle.decimals.unwrap()).unwrap(),
             response.startedAt, response.updatedAt, response.answeredInRound
         )
         },
@@ -83,11 +83,11 @@ pub async fn get_round_data(
 }
 
 pub async fn get_description(provider: Provider<Http<Client>>, chain: Chain, token: String, base: String) {
-    let price_feeds = DataFeeds::with_initial_values();
-    let oracle = price_feeds.get_oracle(chain, &token, &base).unwrap();
+    let price_feeds = DataFeeds::load_chain_feeds_prices(chain).await;
+    let oracle = price_feeds.get_data_feed_prices(&token, &base).unwrap();
     let tx = CallRequest {
-        to: Some(oracle.address),
-        input: oracle.description_call(),
+        to: Some(oracle.contract_address.unwrap()),
+        input: datafeeds::description_call(),
         ..Default::default()
     };
     match provider.call(tx, None).await {
@@ -104,12 +104,11 @@ pub async fn get_description(provider: Provider<Http<Client>>, chain: Chain, tok
     }        
 }
 /// Gets all the Aggregators used by this proxy, in order to get historical data    --> Improve this!
-pub async fn get_all_phases_addresses(provider: Provider<Http<Client>>, oracle: &Oracle) -> Vec<Address> {
+pub async fn get_all_phases_addresses(provider: Provider<Http<Client>>, oracle: &DataFeedIndexPrices) -> Vec<Address> {
     // get current phase
-    let curr_phase_call = oracle.phase_id();
     let curr_phase_req = CallRequest {
-        to: Some(oracle.address),
-        input: curr_phase_call,
+        to: Some(oracle.contract_address.unwrap()),
+        input: datafeeds::phase_id(),
         ..Default::default()
     };
     match provider.call(curr_phase_req, None).await {
@@ -120,9 +119,9 @@ pub async fn get_all_phases_addresses(provider: Provider<Http<Client>>, oracle: 
             for i in 1..phase {
                 all_phases_calls.push(
                     Call3 {
-                        target: oracle.address,
+                        target: oracle.contract_address.unwrap(),
                         allowFailure: true,
-                        callData: oracle.phase_aggregators(i).into_input().unwrap().into(),
+                        callData: datafeeds::phase_aggregators(i).into_input().unwrap().into(),
                     }
                 )
             };
