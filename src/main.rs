@@ -76,12 +76,12 @@ enum Command {
 
 
     // CCIP
-    GetRouter {chain_name: String},
-    GetSelector {chain_name: String},
-//    GetFeeTokens {chain_name: String, selector: u8},
+    GetRouter {chain: String},
+    GetSelector {chain: String},
+//    GetFeeTokens {chain: String, selector: u8},
 /*     ChainStatus {
         #[arg(short, long)]
-        chain_name: String
+        chain: String
     }, */
     GetLane {
         #[arg(short, long)]
@@ -196,15 +196,15 @@ async fn main() {
         },
         //------------------------------------------------------------------------------//
         // CCIP
-        Some(Command::GetRouter { chain_name }) => {
-            let chain = get_chain(chain_name).expect("Error with chain selected");
+        Some(Command::GetRouter { chain }) => {
+            let chain = get_chain(chain).expect("Error with chain selected");
             let router = get_router(&chain).expect("Error looking for router");
-            println!("Router for {} is {}", chain_name, format!("{}", router));
+            println!("Router for {} is {}", chain, format!("{}", router));
         },
-        Some(Command::GetSelector { chain_name }) => {
-            let chain = get_chain(chain_name).expect("Error with chain selected");
+        Some(Command::GetSelector { chain }) => {
+            let chain = get_chain(chain).expect("Error with chain selected");
             let selector = get_selector(&chain).expect("Error looking for router");
-            println!("Selector for {} is {}", chain_name, selector);
+            println!("Selector for {} is {}", chain, selector);
         },
         Some(Command::GetLane { origin, destination }) => {
             let chain_s = get_chain(&origin).expect("Error with source");

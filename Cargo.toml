@@ -21,5 +21,5 @@ reqwest = "0.11.23"
 eyre = "0.6.11"
 alloy-sol-types = "0.6.0"
 # personal libraries (in development)
-ccip = { path = "../ccip" }
-datafeeds = { path="../datafeeds" }
+ccip = { git = "https://github.com/DrHongos/chainlink-ccip/" }
+datafeeds = { git = "https://github.com/DrHongos/chainlink-datafeeds" }

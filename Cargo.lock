@@ -575,6 +575,7 @@ dependencies = [
 [[package]]
 name = "ccip"
 version = "0.1.0"
+source = "git+https://github.com/DrHongos/chainlink-ccip/#5c30a20c0d7966b00f33d332652acf0348146ca7"
 dependencies = [
  "alloy-chains",
  "alloy-primitives",
@@ -735,6 +736,7 @@ dependencies = [
 [[package]]
 name = "datafeeds"
 version = "0.1.0"
+source = "git+https://github.com/DrHongos/chainlink-datafeeds#94ea1b841e424dc1a241fc1de40c5fe3bc44ac95"
 dependencies = [
  "alloy-chains",
  "alloy-primitives",
